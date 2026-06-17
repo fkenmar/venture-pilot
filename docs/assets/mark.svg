@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="venture-pilot mark">
+  <g transform="translate(0,-2)">
+    <path d="M11 14 L31 54 L31 40 L20.5 14 Z" fill="#20E3A2"/>
+    <rect x="28" y="14" width="6" height="33" rx="3" fill="#20E3A2"/>
+    <path d="M31 17 H41 a9 9 0 0 1 0 18 H31" fill="none" stroke="#20E3A2" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
