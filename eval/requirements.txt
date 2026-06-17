@@ -1,0 +1,5 @@
+# Phase 0.1 eval dependencies.
+# Only the official Anthropic Python SDK is needed for live runs; pytest for the
+# deterministic test suite. Mock mode needs neither (pure stdlib).
+anthropic>=0.40
+pytest>=8.0

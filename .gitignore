@@ -1,0 +1,17 @@
+# secrets / local config (model id + API key live here, never committed)
+.env
+*.env
+!*.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# eval outputs
+eval/out/
+
+# os
+.DS_Store
