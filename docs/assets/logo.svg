@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 208" role="img" aria-label="venture-pilot">
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0C111B"/>
+      <stop offset="1" stop-color="#080B12"/>
+    </linearGradient>
+  </defs>
+
+  <!-- self-contained card so it renders identically on GitHub light & dark themes -->
+  <rect x="1.5" y="1.5" width="757" height="205" rx="26" fill="url(#card)" stroke="#1B2433" stroke-width="1.5"/>
+  <rect x="1.5" y="1.5" width="757" height="205" rx="26" fill="none" stroke="#20E3A2" stroke-width="1" opacity="0.10"/>
+
+  <!-- subtle teal halo behind the mark -->
+  <circle cx="104" cy="104" r="58" fill="#20E3A2" opacity="0.07"/>
+
+  <!-- mark (compass-needle VP monogram) -->
+  <g transform="translate(72,42) scale(1.94)">
+    <path d="M11 14 L31 54 L31 40 L20.5 14 Z" fill="#20E3A2"/>
+    <rect x="28" y="14" width="6" height="33" rx="3" fill="#20E3A2"/>
+    <path d="M31 17 H41 a9 9 0 0 1 0 18 H31" fill="none" stroke="#20E3A2" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- thin divider -->
+  <line x1="196" y1="58" x2="196" y2="150" stroke="#1F2A3A" stroke-width="1.5"/>
+
+  <!-- wordmark (monospace — echoes the CLI / dev brand) -->
+  <text x="224" y="106" font-family="'SF Mono','JetBrains Mono','DejaVu Sans Mono','Menlo',ui-monospace,monospace" font-size="52" font-weight="600" letter-spacing="-1.5" fill="#E6EDF3">venture-<tspan fill="#20E3A2">pilot</tspan></text>
+
+  <!-- tagline -->
+  <text x="226" y="142" font-family="'SF Mono','JetBrains Mono','DejaVu Sans Mono','Menlo',ui-monospace,monospace" font-size="17" letter-spacing="0.3" fill="#7E8CA3">raw idea <tspan fill="#5B8DEF">&#8594;</tspan> real customer signal, honest by default</text>
+
+  <!-- signal motif: noise resolving into one decisive peak (nod to the verdict) -->
+  <g transform="translate(226,170)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="0,4 6,1 11,8 17,2 23,7 29,3 35,6 41,4" stroke="#5B8DEF" stroke-width="2" opacity="0.7"/>
+    <polyline points="41,4 56,-12 71,6" stroke="#20E3A2" stroke-width="2.6"/>
+    <circle cx="56" cy="-12" r="2.4" fill="#20E3A2"/>
+  </g>
+</svg>
