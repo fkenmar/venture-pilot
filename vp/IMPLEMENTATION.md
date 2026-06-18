@@ -11,15 +11,15 @@ vp validate "<idea>"          # PLAN → approve gate → cited RESEARCH → dra
 vp synthesize ./interviews/*  # SIGNAL SYNTHESIS → grounded STOP/PIVOT/CONTINUE verdict + calibrated confidence
 ```
 
-Two execution paths, one code path around them:
+Three real backends, one code path around them — pick any LLM you want:
 
-| Mode | Model calls | Everything else (files, grounding, gate, caps, trace) | For |
-|------|-------------|--------------------------------------------------------|-----|
-| **`--api`** | real Anthropic Messages API + server-side `web_search` | real | downloaded users — their own `ANTHROPIC_API_KEY` + `VP_MODEL` |
-| **`--sdk`** | Claude Agent SDK on a logged-in Claude Pro/Max subscription | real | running on a subscription, no API key (our dev path) |
-| **`--mock`** | canned, deterministic | **real** — file writes, citation-grounding, guardrail caps, trace | offline demo + the test substrate |
+| Backend | Model calls | For |
+|------|-------------|-----|
+| **`--api`** | Anthropic Messages API + server-side `web_search` | downloaded users — their own `ANTHROPIC_API_KEY` + `VP_MODEL` |
+| **`--sdk`** | Claude Agent SDK on a logged-in Claude Pro/Max subscription | running on a subscription, no API key (our dev path) |
+| **`--openai`** | any OpenAI-compatible `/v1/chat/completions` (OpenAI / OpenRouter / Groq / local …) | bring any LLM you want |
 
-`vp` auto-selects the most capable configured backend: api key → `--api`, else a logged-in subscription → `--sdk`, else `--mock`. Mock is **not** a fake: only the model's *generative* text is stubbed — the orchestration, I/O, grounding math, guardrails, and tracing are the same code in every mode. That's what makes the flow verifiable without a key, and what the tests run against.
+There is **no offline/mock mode** — the app always uses a real LLM. `vp` auto-selects the configured backend (`VP_BACKEND` pins it): a custom LLM → `--openai`, your key → `--api`, else a logged-in subscription → `--sdk`; if nothing's set up it prints setup help. Tests inject a FakeLLM or stub a transport, so the orchestration, grounding, caps, and tracing run with no network and no model.
 
 ## 1. Agentic structure (single-writer orchestrator + read-only subagents)
 
@@ -52,12 +52,12 @@ Per `docs/ARCHITECTURE.md §1`, this is a **read/write split**, enforced in code
 
 | Module | Responsibility |
 |--------|----------------|
-| `cli.py` | Entry: `validate` / `synthesize`, flags `--api/--mock`, `--yes`, `--out`. Renders the brand UI. |
+| `cli.py` | Entry: `validate` / `synthesize` / `doctor` / `trace`, backend flags `--api/--sdk/--openai`, `--yes`, `--out`. Renders the brand UI. |
 | `orchestrator.py` | Single-writer loop: plan → preview → **approve** → execute; owns all writes; sequences agents; enforces the pause. |
 | `agents/research.py` | Read-only cited research (web_search), returns `Finding`s with sources; abstains on unsupported claims. |
 | `agents/artifacts.py` | Draft-only artifact writer: interview script, outreach DMs, landing page → files (labeled DRAFT). |
 | `agents/synthesize.py` | Verdict judge (reuses the `eval/` `SYSTEM_PROMPT` seed): transcripts → verdict + confidence + cited quotes. |
-| `llm.py` | Anthropic client wrapper: messages, `web_search` tool, retries, **usage/cost accounting**; pluggable mock backend. |
+| `llm.py` | One interface (`complete_json` / `research`) over three real backends — Anthropic Messages (+`web_search`), the Claude Agent SDK, and any OpenAI-compatible endpoint — with **usage/cost accounting**. |
 | `provenance.py` | Source-linked `Fact`/`Finding` types + **citation grounding** (verbatim substring check, reused from `eval/score.py`). |
 | `guardrails.py` | Hard per-run caps (steps / tokens / dollars / wall-clock) **with enforcement** + pause-for-resume kill-switch. |
 | `trace.py` | Full JSONL run trace (every step, tool, source, token/cost) → `out/<run>/trace.jsonl`. |
@@ -73,13 +73,13 @@ Per `docs/ARCHITECTURE.md §1`, this is a **read/write split**, enforced in code
 - **Validate all tool outputs** — malformed model JSON is caught and surfaced, never silently continued.
 - **Full trace from step 1** — `trace.jsonl` records steps, tools, sources, tokens, cost.
 
-## 4. Build sequence (TDD, mock-first, verify against the demo)
+## 4. Build sequence (TDD, real-LLM only)
 
-1. **Foundations** — config, ui, llm (+mock), trace, guardrails, provenance.
-2. **`synthesize`** first (smallest, reuses the eval seed; grounding is deterministic) + sample `interviews/`.
+1. **Foundations** — config, ui, llm (api/sdk/openai), trace, guardrails, provenance.
+2. **`synthesize`** first (smallest; grounding is deterministic) + sample `interviews/`.
 3. **`validate`** — research (cited/abstain) → artifacts (file writes) → plan/approve gate → pause.
-4. **Orchestrator + CLI** — exact demo formatting.
-5. **Tests** — deterministic mock-mode tests; then run both commands in mock and diff the flow against the demo.
-6. **Live** — `--api` path exercised when a key is present; mock proves the rest.
+4. **Orchestrator + CLI** — `doctor` (setup), `trace` (observability), backend auto-detect.
+5. **Tests** — inject a FakeLLM / stub each transport; grounding, caps, abstention, and the flow run with **no network and no model**.
+6. **Live** — exercised against a real backend (the SDK on a Claude subscription).
 
-**Dev rules:** mock path must stay runnable with no key; tests never call the network; the model id never enters tracked source; **commits are authored solely by the repo owner — no Claude author/co-author trailer.**
+**Dev rules:** there is **no offline/mock mode** — the app always uses a real LLM; tests never call the network; the model id never enters tracked source; **commits are authored solely by the repo owner — no Claude author/co-author trailer.**

@@ -12,6 +12,7 @@ import time
 # ---- palette (truecolor ANSI) ---------------------------------------------
 TEAL, AMBER, RED = "32;227;162", "245;165;36", "242;84;91"
 INDIGO, WHITE, MUTED, DIM = "91;141;239", "230;237;243", "123;138;165", "78;90;108"
+VIOLET = "183;148;246"
 INK = "10;14;20"
 
 VERDICT_COLOR = {"STOP": RED, "PIVOT": AMBER, "CONTINUE": TEAL}
@@ -84,9 +85,9 @@ def approve_query() -> str:
 
 
 _MODE_LABEL = {
-    "api": ("your Anthropic API key", TEAL),
+    "api": ("Anthropic API key", TEAL),
     "sdk": ("Claude subscription · no API key", INDIGO),
-    "mock": ("offline demo · no AI calls", AMBER),
+    "openai": ("OpenAI-compatible LLM", VIOLET),
 }
 
 

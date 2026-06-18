@@ -110,7 +110,7 @@ def _landing_html(idea: str) -> str:
 <main>
   <h1>Stop letting it <b>slip through the cracks</b>.</h1>
   <p class="sub">{idea} — for teams who are tired of the workaround.</p>
-  <!-- This form is a DRAFT mock: wire it to your email tool before publishing. -->
+  <!-- DRAFT placeholder form — wire it to your email tool before publishing. -->
   <form onsubmit="return false">
     <input type="email" placeholder="you@company.com" aria-label="email">
     <button>Get early access</button>
@@ -127,7 +127,7 @@ def _landing_html(idea: str) -> str:
 """
 
 
-def mock_artifacts(idea: str) -> list[Artifact]:
+def template_artifacts(idea: str) -> list[Artifact]:
     return [
         Artifact("interview script", "interview-script.md", _interview_script(idea), "Mom-Test"),
         Artifact("outreach DMs", "outreach.md", _outreach(idea), "12 drafts"),
@@ -140,12 +140,11 @@ def draft(llm, idea: str, findings) -> list[Artifact]:
     research_summary = "\n".join(f"- {f.label}" for f in findings if f.supported)
     user = f"Idea: {idea}\n\nCited research:\n{research_summary}\n\nDraft the three artifacts."
     try:
-        data = llm.complete_json(SYSTEM_PROMPT, user, max_tokens=4000,
-                                 mock_result={}, label="draft-artifacts")
-    except Exception:  # malformed model output -> never crash, fall back to templates
+        data = llm.complete_json(SYSTEM_PROMPT, user, max_tokens=4000, label="draft-artifacts")
+    except Exception:  # malformed model output -> never crash, fall back to a starter template
         data = {}
-    if not data:  # mock mode returns {} -> use deterministic templates
-        return mock_artifacts(idea)
+    if not data:
+        return template_artifacts(idea)
     return [
         Artifact("interview script", "interview-script.md",
                  data.get("interview_script", _interview_script(idea)), "Mom-Test"),

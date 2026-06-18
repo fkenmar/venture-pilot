@@ -1,9 +1,13 @@
-"""Anthropic client wrapper with a mock backend.
+"""LLM client — real backends only. No mock, nothing offline.
 
-In `api` mode this makes real Messages API calls (including the server-side
-web_search tool for cited research) and records token usage to the budget + trace.
-In `mock` mode it returns caller-supplied canned data but STILL exercises the
-budget (synthetic usage) and trace, so the orchestration is identical in both modes.
+Three transports, one interface (complete_json / research):
+  - "api"    : Anthropic Messages API + server-side web_search (your own key)
+  - "sdk"    : Claude Agent SDK on a logged-in Claude Pro/Max subscription (no key)
+  - "openai" : ANY OpenAI-compatible /v1/chat/completions server — OpenAI, OpenRouter
+               (→ Claude/GPT/Gemini/Llama/...), Groq, Together, or a LOCAL model
+               (Ollama / LM Studio / vLLM). Bring whatever LLM you want.
+
+Token usage is recorded to the budget + trace on every call.
 """
 from __future__ import annotations
 
@@ -35,22 +39,15 @@ class LLM:
         self.trace = trace
         self._client = None
 
-    # -- internal ---------------------------------------------------------
+    # -- transports -------------------------------------------------------
     def _anthropic(self):
         if self._client is None:
             import anthropic
             self._client = anthropic.Anthropic(api_key=config.API_KEY)
         return self._client
 
-    def _mock_usage(self, system: str, user: str, label: str) -> None:
-        est_in = (len(system) + len(user)) // 4
-        est_out = 220
-        self.budget.add_usage(est_in, est_out)
-        self.trace.usage("mock", est_in, est_out)
-
     def _sdk_transport(self, system: str, user: str, model: str, tools):
-        """One-shot Claude Agent SDK query — runs on the logged-in Claude
-        subscription (no API key). Returns (text, in_tokens, out_tokens, cost)."""
+        """Claude Agent SDK — runs on the logged-in Claude subscription (no API key)."""
         import asyncio
         try:
             from claude_agent_sdk import (query, ClaudeAgentOptions,
@@ -84,17 +81,45 @@ class LLM:
         if cost is not None:
             self.trace.event("cost", usd=cost)
 
+    def _openai_chat(self, system: str, user: str, max_tokens: int):
+        """One call to any OpenAI-compatible /v1/chat/completions endpoint (stdlib only)."""
+        import urllib.error
+        import urllib.request
+        body = {
+            "model": config.OPENAI_MODEL,
+            "messages": [{"role": "system", "content": system},
+                         {"role": "user", "content": user}],
+            "max_tokens": max_tokens,
+            "temperature": 0,
+        }
+        headers = {"Content-Type": "application/json"}
+        if config.OPENAI_KEY:
+            headers["Authorization"] = f"Bearer {config.OPENAI_KEY}"
+        req = urllib.request.Request(config.OPENAI_BASE_URL.rstrip("/") + "/chat/completions",
+                                     data=json.dumps(body).encode(), headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=180) as r:
+                data = json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            raise SystemExit(f"OpenAI-compatible request failed ({e.code}) at "
+                             f"{config.OPENAI_BASE_URL}: {e.read().decode()[:200]}") from e
+        text = data["choices"][0]["message"]["content"]
+        usage = data.get("usage") or {}
+        return text, int(usage.get("prompt_tokens", 0)), int(usage.get("completion_tokens", 0))
+
     # -- structured completion -------------------------------------------
     def complete_json(self, system: str, user: str, *, model: str | None = None,
-                      max_tokens: int | None = None, mock_result=None, label: str = "complete") -> dict:
+                      max_tokens: int | None = None, label: str = "complete") -> dict:
         self.budget.step(label)
         self.trace.step(label, mode=self.mode)
-        if self.mode == "mock":
-            self._mock_usage(system, user, label)
-            return dict(mock_result or {})
         if self.mode == "sdk":
             text, in_tok, out_tok, cost = self._sdk_transport(system, user, config.SDK_MODEL, None)
             self._sdk_account(in_tok, out_tok, cost)
+            return parse_json(text)
+        if self.mode == "openai":
+            text, in_tok, out_tok = self._openai_chat(system, user, max_tokens or config.MAX_TOKENS)
+            self.budget.add_usage(in_tok, out_tok)
+            self.trace.usage(config.OPENAI_MODEL, in_tok, out_tok)
             return parse_json(text)
         msg = self._anthropic().messages.create(
             model=model or config.MODEL,
@@ -108,26 +133,22 @@ class LLM:
         self.trace.usage(model or config.MODEL, msg.usage.input_tokens, msg.usage.output_tokens)
         return parse_json(text)
 
-    # -- cited research (web_search) -------------------------------------
+    # -- cited research --------------------------------------------------
     def research(self, query: str, *, system: str, model: str | None = None,
-                 max_uses: int = 4, mock_findings=None, label: str = "research") -> list[Finding]:
+                 max_uses: int = 4, label: str = "research") -> list[Finding]:
         self.budget.step(label)
         self.trace.step(label, query=query, mode=self.mode)
-        if self.mode == "mock":
-            self._mock_usage(system, query, label)
-            findings = mock_findings or []
-            for f in findings:
-                for s in f.sources:
-                    self.trace.source(s.url, s.title)
-            return findings
         if self.mode == "sdk":
             text, in_tok, out_tok, cost = self._sdk_transport(system, query, config.SDK_MODEL, ["WebSearch"])
             self._sdk_account(in_tok, out_tok, cost)
-            findings = self._parse_findings(text)
-            for f in findings:
-                for s in f.sources:
-                    self.trace.source(s.url, s.title)
-            return findings
+            return self._record(self._parse_findings(text))
+        if self.mode == "openai":
+            # OpenAI-compatible endpoints have no uniform server-side web search,
+            # so research draws on the model's knowledge; it must cite real URLs or abstain.
+            text, in_tok, out_tok = self._openai_chat(system, query, config.MAX_TOKENS)
+            self.budget.add_usage(in_tok, out_tok)
+            self.trace.usage(config.OPENAI_MODEL, in_tok, out_tok)
+            return self._record(self._parse_findings(text))
         client = self._anthropic()
         msg = client.messages.create(
             model=model or config.FAST_MODEL,
@@ -140,7 +161,13 @@ class LLM:
         self.budget.add_usage(msg.usage.input_tokens, msg.usage.output_tokens)
         self.trace.usage(model or config.FAST_MODEL, msg.usage.input_tokens, msg.usage.output_tokens)
         text = "".join(getattr(b, "text", "") for b in msg.content if getattr(b, "type", None) == "text")
-        return self._parse_findings(text)
+        return self._record(self._parse_findings(text))
+
+    def _record(self, findings: list[Finding]) -> list[Finding]:
+        for f in findings:
+            for s in f.sources:
+                self.trace.source(s.url, s.title)
+        return findings
 
     def _parse_findings(self, text: str) -> list[Finding]:
         try:

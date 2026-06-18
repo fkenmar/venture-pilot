@@ -9,12 +9,13 @@ description = "A human-in-the-loop customer-discovery co-pilot: cited research, 
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "UNLICENSED" }
-dependencies = ["anthropic>=0.40"]
+# claude-agent-sdk powers --sdk (Claude Pro/Max subscription, no API key);
+# anthropic powers --api (your own key). Both ship by default so `vp` works
+# with Claude out of the box — no offline surprise.
+dependencies = ["anthropic>=0.40", "claude-agent-sdk>=0.2"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
-# Use a Claude Pro/Max subscription instead of an API key (the `--sdk` backend).
-sdk = ["claude-agent-sdk>=0.2"]
 
 [project.scripts]
 vp = "vp.cli:main"
