@@ -17,7 +17,7 @@ and tells you the truth about what it finds, <strong>including when the truth is
 <img alt="status" src="https://img.shields.io/badge/vp-runs%20offline-20E3A2?style=flat-square&labelColor=0A0E14">
 <img alt="honesty" src="https://img.shields.io/badge/design-honest%20by%20default-5B8DEF?style=flat-square&labelColor=0A0E14">
 <img alt="python" src="https://img.shields.io/badge/python-3.10+-E6EDF3?style=flat-square&labelColor=0A0E14">
-<img alt="tests" src="https://img.shields.io/badge/tests-32%20passing-20E3A2?style=flat-square&labelColor=0A0E14">
+<img alt="tests" src="https://img.shields.io/badge/tests-34%20passing-20E3A2?style=flat-square&labelColor=0A0E14">
 <img alt="prs" src="https://img.shields.io/badge/PRs-welcome-5B8DEF?style=flat-square&labelColor=0A0E14">
 </p>
 
@@ -121,7 +121,7 @@ The verdict is only trusted because a separate eval proves a model beats a naive
 # the honesty gate — the naive baseline FAILS on purpose (~11%), which proves the eval discriminates
 cd eval && python run_eval.py --mode mock
 
-# deterministic tests, no API: 13 app + 19 eval = 32
+# deterministic tests, no API: 15 app (incl. the live path, stubbed) + 19 eval = 34
 python -m pytest vp/tests -q          # from the repo root
 cd eval && python -m pytest -q
 ```
