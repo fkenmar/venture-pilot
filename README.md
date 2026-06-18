@@ -118,7 +118,7 @@ vp synthesize ./interviews/*.md
 
 - `vp validate` writes real **draft** artifacts to `out/` (interview script, outreach DMs, a landing page) and **abstains** on any research claim it can't source.
 - `vp synthesize` reads the sample transcripts in [`interviews/`](interviews/) and returns an honest verdict where **every cited quote is verified verbatim** against the transcripts. Fabricated quotes are flagged, never shown as fact.
-- Hard caps on steps / tokens / cost with a kill-switch apply to every live run; a full JSON trace lands in `out/trace.jsonl`.
+- Hard caps on steps / tokens / cost with a kill-switch apply to every live run; a full JSON trace lands in `out/trace.jsonl` — pretty-print it with **`vp trace`**.
 
 <details>
 <summary><strong>Under the hood — the Phase 0.1 honesty eval + the tests</strong></summary>

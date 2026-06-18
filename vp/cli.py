@@ -9,8 +9,10 @@ Run `vp doctor` to see what's available and how to turn each on.
 from __future__ import annotations
 
 import argparse
+import json
+import os
 
-from . import config, ui
+from . import __version__, config, ui
 from .guardrails import Budget, CapExceeded
 from .llm import LLM
 from .trace import Trace
@@ -36,7 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
         description="venture-pilot — a human-in-the-loop customer-discovery co-pilot.",
         epilog="run `vp doctor` to check your setup. backend: --api (your key) | --sdk (Claude subscription) | --mock (offline).",
     )
-    sub = p.add_subparsers(dest="cmd", required=True)
+    p.add_argument("--version", action="version", version=f"vp {__version__}")
+    sub = p.add_subparsers(dest="cmd")
 
     pv = sub.add_parser("validate", help="prep cited research + draft artifacts for an idea")
     pv.add_argument("idea", help="the idea, in quotes")
@@ -48,6 +51,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(ps)
 
     sub.add_parser("doctor", help="check what's installed and which backends are available")
+
+    pt = sub.add_parser("trace", help="pretty-print the last run (steps, sources, usage, verdict)")
+    pt.add_argument("--out", default="out", help="run dir to read trace from (default: out)")
     return p
 
 
@@ -81,10 +87,61 @@ def doctor() -> int:
     return 0
 
 
+def trace_cmd(out_dir: str) -> int:
+    path = os.path.join(out_dir, "trace.jsonl")
+    if not os.path.exists(path):
+        raise SystemExit(f"no trace at {path} — run `vp validate` or `vp synthesize` first.")
+    recs = [json.loads(line) for line in open(path) if line.strip()]
+    steps = [r for r in recs if r["kind"] == "step"]
+    sources = [r for r in recs if r["kind"] == "source"]
+    writes = [r for r in recs if r["kind"] == "write"]
+    usage = [r for r in recs if r["kind"] == "usage"]
+    done = next((r for r in recs if r["kind"] == "done"), {})
+
+    ui.out("")
+    ui.out(f"  {ui.c('venture-pilot', ui.TEAL, True)}  {ui.c('· run trace', ui.MUTED)}  {ui.c(path, ui.DIM)}")
+    ui.out(f"  {ui.RULE}")
+
+    ui.out(f"  {ui.BAR} {ui.c('steps', ui.TEAL, True)}")
+    for i, s in enumerate(steps, 1):
+        ui.out(f"    {ui.c(str(i), ui.DIM)}  " + ui.c(s.get("label", "").ljust(24), ui.WHITE)
+               + ui.c(s.get("mode", ""), ui.DIM))
+    if sources:
+        ui.out(f"  {ui.BAR} {ui.c('sources', ui.TEAL, True)}")
+        for s in sources:
+            ui.out("    " + ui.c("└─", ui.DIM) + " " + ui.c(s.get("url", ""), ui.INDIGO))
+    if writes:
+        ui.out(f"  {ui.BAR} {ui.c('writes', ui.TEAL, True)}")
+        for w in writes:
+            ui.out(f"    {ui.OK} " + ui.c(w.get("path", ""), ui.INDIGO))
+
+    tok = done.get("tokens", sum(u.get("in_tokens", 0) + u.get("out_tokens", 0) for u in usage))
+    ui.out(f"  {ui.BAR} {ui.c('usage', ui.TEAL, True)}")
+    line = f"    {ui.c(f'{tok:,} tokens', ui.WHITE)}"
+    if done.get("dollars") is not None:
+        line += ui.c(f"  ·  ${done['dollars']:.4f}", ui.DIM)
+    line += ui.c(f"  ·  {len(steps)} step(s)", ui.DIM)
+    if done.get("elapsed_s") is not None:
+        line += ui.c(f"  ·  {done['elapsed_s']}s", ui.DIM)
+    ui.out(line)
+    if done.get("verdict"):
+        col = ui.VERDICT_COLOR.get(done["verdict"], ui.AMBER)
+        ui.out(f"    {ui.c('verdict', ui.MUTED)} {ui.c(done['verdict'], col, True)}  "
+               + ui.c(f"{done.get('grounded')}/{done.get('total')} grounded", ui.DIM))
+    ui.out("")
+    return 0
+
+
 def main(argv=None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if not args.cmd:
+        parser.print_help()
+        return 0
     if args.cmd == "doctor":
         return doctor()
+    if args.cmd == "trace":
+        return trace_cmd(args.out)
 
     mode = args.mode or config.default_mode()
     if mode == "api":

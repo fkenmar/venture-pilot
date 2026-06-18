@@ -131,6 +131,16 @@ def test_sdk_research_routes_and_parses(monkeypatch):
     assert findings and findings[0].supported and findings[0].sources[0].url == "https://x.com"
 
 
+def test_cli_trace_reads_last_run(tmp_path, capsys):
+    from vp.cli import main
+    main(["synthesize", INTERVIEWS, "--mock", "--no-pace", "--out", str(tmp_path)])
+    capsys.readouterr()  # discard the synth output
+    rc = main(["trace", "--out", str(tmp_path)])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "run trace" in out and "PIVOT" in out and "grounded" in out
+
+
 def test_cli_synthesize_prints_verdict(tmp_path, capsys):
     from vp.cli import main
     rc = main(["synthesize", INTERVIEWS, "--mock", "--no-pace", "--out", str(tmp_path)])
