@@ -41,8 +41,13 @@ Return STRICT JSON, nothing else:
  "cited_quotes": ["<verbatim substrings copied EXACTLY from the transcripts>"],
  "demand": "<where real demand points if PIVOT, else empty>",
  "recommendation": "<the honest next step>"}
-summary: at most 2 lines, each <= 54 characters.
-Every quote MUST be copied character-for-character from a transcript. Never invent a quote."""
+
+Hard limits (keep the readout clean and groundable):
+- summary: at most 2 lines, each <= 54 characters.
+- quotes (cited_quotes AND every evidence quote): SHORT verbatim snippets — a few words, \
+< 55 characters — copied character-for-character from a transcript. Never invent or paraphrase a quote.
+- evidence: at most 5 items; note: <= 6 words (e.g. "money already spent · t1").
+- demand: <= 60 characters. recommendation: one sentence."""
 
 USER_TEMPLATE = """Idea pitched: {idea}
 Interviews ({n}):
@@ -78,39 +83,12 @@ def _wrap(text: str, width: int = 54, max_lines: int = 2) -> list[str]:
     return lines or [text]
 
 
-def mock_result() -> dict:
-    """Deterministic verdict for the demo idea — every quote is verbatim in interviews/."""
-    return {
-        "verdict": "PIVOT",
-        "confidence": 0.71,
-        "summary": ["real, paid pain is here — but not for thread summaries.",
-                    "6 of 8 already pay to fix post-meeting follow-ups."],
-        "evidence": [
-            {"kind": "politeness", "quote": "I'd definitely use that", "note": "politeness · no behavior"},
-            {"kind": "signal", "quote": "we pay $40/mo for Fireflies", "note": "money already spent · t1"},
-            {"kind": "signal", "quote": "dropped action items kill us", "note": "quantified pain · t5"},
-        ],
-        "cited_quotes": [
-            "we pay $40/mo for Fireflies",
-            "I'd definitely use that",
-            "dropped action items kill us",
-            "we already pay for Otter",
-            "I'd switch from our current mess in a heartbeat",
-            "I'd pay real money to never drop an action item again",
-            "What actually costs us is dropped follow-ups",
-            "I don't have a budget for tools",
-        ],
-        "demand": "demand points at meeting action-items, not thread TL;DRs",
-        "recommendation": "re-pitch the action-item tracker to those 6 buyers.",
-    }
-
-
 def synthesize(llm, transcripts, idea: str = "") -> SynthResult:
     """transcripts: list of (id, text). Returns a SynthResult with REAL grounding."""
     corpus = "\n\n".join(f"=== {tid} ===\n{txt}" for tid, txt in transcripts)
     user = USER_TEMPLATE.format(idea=idea or "(unspecified)", n=len(transcripts), corpus=corpus)
     data = llm.complete_json(SYSTEM_PROMPT, user, model=config.MODEL, max_tokens=1500,
-                             mock_result=mock_result(), label="synthesize-verdict")
+                             label="synthesize-verdict")
 
     verdict = data.get("verdict")
     confidence = float(data.get("confidence") or 0.0)

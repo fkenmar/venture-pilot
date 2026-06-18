@@ -35,6 +35,17 @@ FAST_MODEL = os.environ.get("VP_FAST_MODEL", "") or MODEL
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 MAX_TOKENS = int(os.environ.get("VP_MAX_TOKENS", "1500"))
 
+# Model alias for the Claude Agent SDK backend (--sdk), which runs on the
+# logged-in Claude subscription instead of a metered API key.
+SDK_MODEL = os.environ.get("VP_SDK_MODEL", "sonnet")
+
+# OpenAI-compatible backend (--openai) — works with ANY /v1/chat/completions server:
+# OpenAI, OpenRouter (→ Claude/GPT/Gemini/Llama/...), Groq, Together, Gemini's OpenAI
+# endpoint, or a LOCAL model (Ollama / LM Studio / vLLM). Bring whatever LLM you want.
+OPENAI_BASE_URL = os.environ.get("VP_OPENAI_BASE_URL", "https://api.openai.com/v1")
+OPENAI_MODEL = os.environ.get("VP_OPENAI_MODEL", "")
+OPENAI_KEY = os.environ.get("VP_OPENAI_KEY", "") or os.environ.get("OPENAI_API_KEY", "")
+
 # Hard per-run caps (ARCHITECTURE §5) — enforced as a kill-switch in guardrails.py.
 MAX_STEPS = int(os.environ.get("VP_MAX_STEPS", "12"))
 MAX_RUN_TOKENS = int(os.environ.get("VP_MAX_RUN_TOKENS", "500000"))
@@ -50,15 +61,46 @@ def has_api_config() -> bool:
     return bool(API_KEY and MODEL)
 
 
-def default_mode() -> str:
-    """Live when a key+model are configured, else the deterministic mock path."""
-    return "api" if has_api_config() else "mock"
+def sdk_available() -> bool:
+    """True when the Claude Agent SDK + a `claude` CLI are present (subscription path)."""
+    import importlib.util
+    import shutil
+    return shutil.which("claude") is not None and importlib.util.find_spec("claude_agent_sdk") is not None
+
+
+def openai_available() -> bool:
+    """True when an OpenAI-compatible LLM is configured (a model + a key, or a local URL)."""
+    local = any(h in OPENAI_BASE_URL for h in ("localhost", "127.0.0.1", "0.0.0.0"))
+    return bool(OPENAI_MODEL and (OPENAI_KEY or local))
+
+
+def require_openai_config() -> None:
+    if not OPENAI_MODEL:
+        raise SystemExit("--openai needs VP_OPENAI_MODEL (+ VP_OPENAI_KEY / OPENAI_API_KEY "
+                         "unless the endpoint is local). Run `vp doctor`.")
+
+
+def default_mode():
+    """The LLM the user wants. `VP_BACKEND` pins it explicitly; otherwise pick the best
+    that's configured: a custom LLM you set up (openai) -> your Anthropic key (api) ->
+    a logged-in Claude subscription (sdk). Returns None when nothing is set up — the CLI
+    then prints setup help. There is no offline/mock mode; this app always uses a real LLM."""
+    pinned = os.environ.get("VP_BACKEND", "").strip().lower()
+    if pinned in ("api", "sdk", "openai"):
+        return pinned
+    if openai_available():
+        return "openai"
+    if has_api_config():
+        return "api"
+    if sdk_available():
+        return "sdk"
+    return None
 
 
 def require_api_config() -> None:
     missing = [n for n, v in (("ANTHROPIC_API_KEY", API_KEY), ("VP_MODEL", MODEL)) if not v]
     if missing:
         raise SystemExit(
-            "Missing env for --api mode: " + ", ".join(missing)
-            + "\nCopy eval/.env.example to eval/.env and fill it in, or run with --mock."
+            "Missing env for --api: " + ", ".join(missing)
+            + "\nAdd them to .env (cp .env.example .env), or use --sdk / --openai. See `vp doctor`."
         )

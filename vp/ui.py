@@ -12,6 +12,7 @@ import time
 # ---- palette (truecolor ANSI) ---------------------------------------------
 TEAL, AMBER, RED = "32;227;162", "245;165;36", "242;84;91"
 INDIGO, WHITE, MUTED, DIM = "91;141;239", "230;237;243", "123;138;165", "78;90;108"
+VIOLET = "183;148;246"
 INK = "10;14;20"
 
 VERDICT_COLOR = {"STOP": RED, "PIVOT": AMBER, "CONTINUE": TEAL}
@@ -83,6 +84,18 @@ def approve_query() -> str:
     return f"    {c('approve plan?', MUTED)}  {c('[Y/n]', DIM)} {c('>', TEAL)} "
 
 
+_MODE_LABEL = {
+    "api": ("Anthropic API key", TEAL),
+    "sdk": ("Claude subscription · no API key", INDIGO),
+    "openai": ("OpenAI-compatible LLM", VIOLET),
+}
+
+
+def mode_banner(mode: str) -> None:
+    label, col = _MODE_LABEL.get(mode, (mode, MUTED))
+    out(f"  {c('●', col)} {c(mode, col, True)}  {c('·', DIM)}  {c(label, MUTED)}", 0.0)
+
+
 def finding(text: str, source_label: str) -> None:
     out(f"    {OK}  " + c(text.ljust(44), WHITE) + f"{SRC} {c(source_label, INDIGO)}", 0.2)
 
@@ -121,16 +134,16 @@ def verdict(label: str, confidence: float, summary_lines, evidence,
         f"{c('confidence', MUTED)} {c(f'{confidence:.2f}', WHITE, True)} {c('· calibrated', DIM)}", 0.6)
     out("")
     for ln in summary_lines:
-        out("   " + c(ln, WHITE), 0.16)
+        out("   " + c(_clip(ln, 54), WHITE), 0.16)
     out("")
     out(f"   {c('evidence', MUTED)}", 0.18)
-    for kind, quote, note in evidence:
+    for kind, quote, note in evidence[:5]:
         mark = OK if kind == "signal" else NO
         note_col = TEAL if kind == "signal" else MUTED
-        out(f"     {mark}  " + c(_q(quote).ljust(34), WHITE if kind == "signal" else DIM)
-            + c(note, note_col), 0.25)
+        out(f"     {mark}  " + c(_q(_clip(quote, 30)).ljust(34), WHITE if kind == "signal" else DIM)
+            + c(_clip(note, 26), note_col), 0.25)
     if demand:
-        out(f"     {c('→', INDIGO, True)}  " + c(demand, INDIGO), 0.5)
+        out(f"     {c('→', INDIGO, True)}  " + c(_clip(demand, 56), INDIGO), 0.5)
     out("")
     if recommendation:
         out(f"   {c('next', TEAL, True)}   " + c(recommendation, WHITE), 0.4)
@@ -143,3 +156,8 @@ def verdict(label: str, confidence: float, summary_lines, evidence,
 def _q(s: str) -> str:
     s = s.strip().strip('"')
     return f'"{s}"'
+
+
+def _clip(s: str, n: int) -> str:
+    s = " ".join((s or "").split())
+    return s if len(s) <= n else s[: n - 1].rstrip() + "…"

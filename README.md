@@ -14,10 +14,10 @@ and tells you the truth about what it finds, <strong>including when the truth is
 </p>
 
 <p>
-<img alt="status" src="https://img.shields.io/badge/vp-runs%20offline-20E3A2?style=flat-square&labelColor=0A0E14">
+<img alt="llm" src="https://img.shields.io/badge/works%20with-any%20LLM-20E3A2?style=flat-square&labelColor=0A0E14">
 <img alt="honesty" src="https://img.shields.io/badge/design-honest%20by%20default-5B8DEF?style=flat-square&labelColor=0A0E14">
 <img alt="python" src="https://img.shields.io/badge/python-3.10+-E6EDF3?style=flat-square&labelColor=0A0E14">
-<img alt="tests" src="https://img.shields.io/badge/tests-34%20passing-20E3A2?style=flat-square&labelColor=0A0E14">
+<img alt="tests" src="https://img.shields.io/badge/tests-38%20passing-20E3A2?style=flat-square&labelColor=0A0E14">
 <img alt="prs" src="https://img.shields.io/badge/PRs-welcome-5B8DEF?style=flat-square&labelColor=0A0E14">
 </p>
 
@@ -38,9 +38,9 @@ and tells you the truth about what it finds, <strong>including when the truth is
 
 <img src="docs/assets/demo.gif" alt="the vp CLI running: plan, approve, cited research, drafted artifacts, and an honest quote-grounded PIVOT verdict" width="840">
 
-<sub><strong>This is <code>vp</code> actually running</strong> — recorded straight from the CLI, fully offline. <em>Plan → <strong>you</strong> approve → cited research (it abstains when there's no source) → drafted artifacts (nothing sent) → <strong>you</strong> run the interviews → an honest <strong>PIVOT</strong> verdict where every cited quote is checked verbatim against the transcripts (<code>8/8 grounded</code>).</em></sub>
+<sub><strong>This is <code>vp</code> — a real AI agent for customer discovery.</strong> <em>Plan → <strong>you</strong> approve → cited research (it abstains when there's no source) → drafted artifacts (nothing sent) → <strong>you</strong> run the interviews → an honest <strong>STOP / PIVOT / CONTINUE</strong> verdict where every cited quote is checked verbatim against the transcripts.</em></sub>
 
-<sub>👉 Runs with <strong>zero setup, no API key.</strong> Live mode (real web-search research + a real model verdict) turns on when you add your key. <a href="#-try-it-in-60-seconds">Run it ↓</a></sub>
+<sub>👉 Runs on <strong>any LLM you want</strong> — your Claude&nbsp;Pro/Max subscription, an Anthropic API key, or any OpenAI-compatible model (incl. <strong>local</strong>). No offline fakery; it always uses a real model. <a href="#-try-it-in-60-seconds">Set it up ↓</a></sub>
 
 </div>
 
@@ -95,11 +95,13 @@ It weighs **substance over tone** — money already spent on a workaround, speci
 
 ## 🚀 Try it in 60 seconds
 
-The entire flow in the GIF runs **offline, no API key** — mock mode is deterministic:
-
 ```bash
 git clone <this-repo> && cd venture-pilot
 pip install -e .
+
+# Point it at an LLM (see the table below). Easiest: log into Claude once —
+# then vp runs on your subscription with no API key.
+vp doctor                            # confirm which backend you're on
 
 # 1) prep cited research + draft artifacts for an idea (you approve the plan)
 vp validate "Slack bot that summarizes long threads for managers"
@@ -108,9 +110,17 @@ vp validate "Slack bot that summarizes long threads for managers"
 vp synthesize ./interviews/*.md
 ```
 
-- `vp validate` writes real **draft** artifacts to `out/` — interview script, outreach DMs, a landing page — and **abstains** on any research claim it can't source.
-- `vp synthesize` reads the sample transcripts in [`interviews/`](interviews/) and returns a **PIVOT** verdict in which **every cited quote is verified verbatim** against the transcripts (`8/8 grounded`). Fabricated quotes are flagged, never shown as fact.
-- **Live mode** — real web-search-backed research + a real model verdict — turns on automatically once `VP_MODEL` + `ANTHROPIC_API_KEY` are in `eval/.env`, or with `--api`. Hard caps on steps/tokens/cost with a kill-switch apply either way.
+`vp` **always uses a real LLM** (no offline mode) and **auto-picks whichever you've set up** — run `vp doctor`, or force one with `--api` / `--sdk` / `--openai`:
+
+| Backend | Enable it | What it is |
+|---|---|---|
+| ⚡ **`--sdk`** | run `claude` once to log in (the Agent SDK ships with the app) | a **Claude Pro/Max subscription** — no API key. Easiest if you already have Claude. |
+| 🔑 **`--api`** | `cp .env.example .env` → add your `ANTHROPIC_API_KEY` (+ `VP_MODEL`) | **bring your own Anthropic key** — pay-per-token, ~pennies/run |
+| 🟣 **`--openai`** | set `VP_OPENAI_MODEL` (+ `VP_OPENAI_BASE_URL` / `OPENAI_API_KEY`) | **any OpenAI-compatible LLM** — OpenAI, OpenRouter (→ Claude/GPT/Gemini/Llama), Groq, or a **local** model (Ollama / LM Studio) |
+
+- `vp validate` writes real **draft** artifacts to `out/` (interview script, outreach DMs, a landing page) and **abstains** on any research claim it can't source.
+- `vp synthesize` reads the sample transcripts in [`interviews/`](interviews/) and returns an honest verdict where **every cited quote is verified verbatim** against the transcripts. Fabricated quotes are flagged, never shown as fact.
+- Hard caps on steps / tokens / cost with a kill-switch apply to every live run; a full JSON trace lands in `out/trace.jsonl` — pretty-print it with **`vp trace`**.
 
 <details>
 <summary><strong>Under the hood — the Phase 0.1 honesty eval + the tests</strong></summary>
@@ -121,7 +131,7 @@ The verdict is only trusted because a separate eval proves a model beats a naive
 # the honesty gate — the naive baseline FAILS on purpose (~11%), which proves the eval discriminates
 cd eval && python run_eval.py --mode mock
 
-# deterministic tests, no API: 15 app (incl. the live path, stubbed) + 19 eval = 34
+# deterministic tests (stubbed transports, no network): 19 app + 19 eval = 38
 python -m pytest vp/tests -q          # from the repo root
 cd eval && python -m pytest -q
 ```
@@ -178,7 +188,7 @@ Hard caps on steps / tokens / cost with a kill-switch, and full traces of every 
 
 ## 📦 What's in this repo
 
-Built in the open. The wedge is implemented as an early **`vp`** MVP you can run offline today; the verdict stays gated by the Phase 0.1 eval. What's public:
+Built in the open. The wedge is implemented as an early **`vp`** MVP that runs on any LLM today; the verdict stays gated by the Phase 0.1 eval. What's public:
 
 | Path | What it is |
 |------|-----------|
@@ -193,12 +203,12 @@ Built in the open. The wedge is implemented as an early **`vp`** MVP you can run
 
 ## 🗺 Status and roadmap
 
-**Phase 0 — validation, with an early MVP in hand.** The honesty thesis is being proven on a labeled eval set, and the wedge now exists as a runnable `vp` MVP (offline mock today; live mode behind your API key). It leads with *verifiable artifacts* (cited research + landing page); the headline verdict is trusted **only while the Phase 0.1 eval clears its gate.**
+**Phase 0 — validation, with an early MVP in hand.** The honesty thesis is being proven on a labeled eval set, and the wedge now exists as a runnable `vp` MVP that runs on **any LLM** — a Claude subscription, an Anthropic key, or any OpenAI-compatible model. It leads with *verifiable artifacts* (cited research + landing page); the headline verdict is trusted **only while the Phase 0.1 eval clears its gate.**
 
 ```
 Phase 0  ░ De-risk before code      → kill/redesign gates                  ← validating now
-Phase 1  ░ Verifiable-artifact MVP  → cited research + landing page        ← vp MVP runs offline
-Phase 2  ░ The honest verdict       → STOP/PIVOT/CONTINUE                   ← vp MVP runs offline
+Phase 1  ░ Verifiable-artifact MVP  → cited research + landing page        ← vp MVP built
+Phase 2  ░ The honest verdict       → STOP/PIVOT/CONTINUE                   ← vp MVP built
 Phase 3  ░ Escape one-shot churn    → recurring weekly signal digest
 Phase 4  ░ Expand toward the vision → only after a retention floor
 ```
