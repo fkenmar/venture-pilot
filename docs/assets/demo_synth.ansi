@@ -1,0 +1,23 @@
+  [38;2;91;141;239m●[0m [1;38;2;91;141;239msdk[0m  [38;2;78;90;108m·[0m  [38;2;123;138;165mClaude subscription · no API key[0m
+
+  [1;38;2;32;227;162m▌[0m [1;38;2;32;227;162mSIGNAL SYNTHESIS[0m   [38;2;123;138;165mintent vs. politeness[0m
+   [38;2;123;138;165mtranscripts[0m [1;38;2;230;237;243m8[0m   [38;2;78;90;108m·[0m   [38;2;123;138;165mcited quotes[0m [1;38;2;230;237;243m7/7 grounded[0m [1;38;2;32;227;162m✓[0m
+  [38;2;78;90;108m──────────────────────────────────────────────────────────[0m
+   [1;38;2;123;138;165mVERDICT[0m   [48;2;245;165;36m[38;2;10;14;20m[1m PIVOT [0m      [38;2;123;138;165mconfidence[0m [1;38;2;230;237;243m0.93[0m [38;2;78;90;108m· calibrated[0m
+
+   [38;2;230;237;243mThread-summary: zero credible demand found.[0m
+   [38;2;230;237;243mStrong action-item signal across 6 of 8.[0m
+
+   [38;2;123;138;165mevidence[0m
+     [1;38;2;32;227;162m✓[0m  [38;2;230;237;243m"I'd put it on the company car…"  [0m[38;2;32;227;162mpay-ready, action items ·…[0m
+     [1;38;2;32;227;162m✓[0m  [38;2;230;237;243m"I'd pay real money to never d…"  [0m[38;2;32;227;162mexplicit pay intent · t5[0m
+     [1;38;2;32;227;162m✓[0m  [38;2;230;237;243m"I'd switch from our current m…"  [0m[38;2;32;227;162mswitching intent elsewher…[0m
+     [1;38;2;32;227;162m✓[0m  [38;2;230;237;243m"we already pay for Otter for…"   [0m[38;2;32;227;162mexisting spend covers pit…[0m
+     [1;38;2;242;84;91m✗[0m  [38;2;78;90;108m"I'd probably use it"             [0m[38;2;123;138;165mno behavior, future tense…[0m
+     [1;38;2;91;141;239m→[0m  [38;2;91;141;239mPost-meeting action-item tracking for eng/product manag…[0m
+
+   [1;38;2;32;227;162mnext[0m   [38;2;230;237;243mKill the thread-summarizer and book follow-ups with Priya, Renee, and Wei to validate willingness to pay for a post-meeting action-item tracker.[0m
+  [38;2;78;90;108m──────────────────────────────────────────────────────────[0m
+   [38;2;123;138;165mevery line links to a verbatim quote or a source.[0m
+   [38;2;123;138;165mnothing is asserted — including the call to act.[0m
+

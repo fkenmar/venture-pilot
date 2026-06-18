@@ -1,5 +1,7 @@
-# venture-pilot — demo GIF, recorded from the REAL `vp` CLI (mock mode).
-# The app and this GIF are the same thing: `python -m vp validate|synthesize`.
+# venture-pilot — demo GIF.
+# This replays REAL output captured from `vp ... --sdk` running live on a Claude
+# subscription (docs/assets/demo_validate.ansi / demo_synth.ansi — genuine web-search
+# sources + a real grounded verdict), paced for the camera so there's no dead air.
 # Build:  vhs docs/assets/demo.tape
 
 Output "/Users/kenmarfrancisco/Projects/venture-pilot/docs/assets/demo.gif"
@@ -8,7 +10,7 @@ Set Shell "bash"
 Set FontFamily "Menlo"
 Set FontSize 18
 Set Width 1100
-Set Height 880
+Set Height 920
 Set Padding 30
 Set Margin 26
 Set MarginFill "#05070C"
@@ -24,7 +26,7 @@ Type "export PS1='~ $ '"
 Enter
 Type "cd /Users/kenmarfrancisco/Projects/venture-pilot"
 Enter
-Type `vp() { /opt/homebrew/Caskroom/miniconda/base/bin/python -m vp "$@"; }`
+Type `vp() { f=docs/assets/demo_validate.ansi; [ "$1" = synthesize ] && f=docs/assets/demo_synth.ansi; while IFS= read -r l; do printf "%s\n" "$l"; sleep 0.03; done < "$f"; }`
 Enter
 Type "clear"
 Enter
@@ -34,14 +36,10 @@ Sleep 700ms
 Type `vp validate "Slack bot that summarizes long threads for managers"`
 Sleep 400ms
 Enter
-Sleep 2600ms
-Type "y"
-Sleep 300ms
-Enter
-Sleep 5s
+Sleep 4s
 
 Type "vp synthesize ./interviews/*.md"
 Sleep 400ms
 Enter
-Sleep 6s
+Sleep 4s
 Sleep 1500ms

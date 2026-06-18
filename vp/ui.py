@@ -97,7 +97,7 @@ def mode_banner(mode: str) -> None:
 
 
 def finding(text: str, source_label: str) -> None:
-    out(f"    {OK}  " + c(text.ljust(44), WHITE) + f"{SRC} {c(source_label, INDIGO)}", 0.2)
+    out(f"    {OK}  " + c(_clip(text, 42).ljust(44), WHITE) + f"{SRC} {c(source_label, INDIGO)}", 0.2)
 
 
 def abstain(text: str) -> None:

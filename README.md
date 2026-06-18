@@ -36,9 +36,9 @@ and tells you the truth about what it finds, <strong>including when the truth is
 
 <div align="center">
 
-<img src="docs/assets/demo.gif" alt="the vp CLI running: plan, approve, cited research, drafted artifacts, and an honest quote-grounded PIVOT verdict" width="840">
+<img src="docs/assets/demo.gif" alt="vp running live on a Claude subscription: plan, approve, web-search-cited research, drafted artifacts, and an honest quote-grounded PIVOT verdict" width="840">
 
-<sub><strong>This is <code>vp</code> — a real AI agent for customer discovery.</strong> <em>Plan → <strong>you</strong> approve → cited research (it abstains when there's no source) → drafted artifacts (nothing sent) → <strong>you</strong> run the interviews → an honest <strong>STOP / PIVOT / CONTINUE</strong> verdict where every cited quote is checked verbatim against the transcripts.</em></sub>
+<sub><strong>This is <code>vp</code> running for real</strong> — recorded live on a Claude subscription (real web-search sources, a real <code>7/7</code>-grounded verdict). <em>Plan → <strong>you</strong> approve → cited research (it abstains when there's no source) → drafted artifacts (nothing sent) → <strong>you</strong> run the interviews → an honest <strong>STOP / PIVOT / CONTINUE</strong> verdict where every cited quote is checked verbatim against the transcripts.</em></sub>
 
 <sub>👉 Runs on <strong>any LLM you want</strong> — your Claude&nbsp;Pro/Max subscription, an Anthropic API key, or any OpenAI-compatible model (incl. <strong>local</strong>). No offline fakery; it always uses a real model. <a href="#-try-it-in-60-seconds">Set it up ↓</a></sub>
 

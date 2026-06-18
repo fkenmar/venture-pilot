@@ -1,0 +1,32 @@
+  [38;2;91;141;239m●[0m [1;38;2;91;141;239msdk[0m  [38;2;78;90;108m·[0m  [38;2;123;138;165mClaude subscription · no API key[0m
+
+  [1;38;2;32;227;162mventure-pilot[0m  [38;2;78;90;108m·[0m  [38;2;123;138;165mhuman-in-the-loop customer discovery[0m
+  [38;2;78;90;108m──────────────────────────────────────────────────────────[0m
+  [38;2;123;138;165midea[0m  [38;2;230;237;243m"Slack bot that summarizes long threads for managers"[0m
+
+  [1;38;2;32;227;162m▌[0m [1;38;2;32;227;162mPLAN[0m   [38;2;123;138;165mthe agent preps — you approve anything irreversible[0m
+    [38;2;78;90;108m1[0m  [38;2;230;237;243mfind target customers + communities         [0m[38;2;32;227;162mauto[0m
+    [38;2;78;90;108m2[0m  [38;2;230;237;243mdraft outreach + interview script           [0m[38;2;245;165;36myou send[0m
+    [38;2;78;90;108m3[0m  [38;2;230;237;243mbuild a landing-page test artifact          [0m[38;2;245;165;36myou publish[0m
+    [38;2;78;90;108m4[0m  [38;2;230;237;243msynthesize your interviews -> verdict       [0m[38;2;245;165;36mafter calls[0m
+    [38;2;123;138;165mapprove plan?[0m  [38;2;78;90;108m[Y/n][0m [38;2;32;227;162m>[0m [1;38;2;32;227;162my[0m
+
+  [1;38;2;32;227;162m▌[0m [1;38;2;32;227;162mRESEARCH[0m   [38;2;123;138;165mfinding who actually has this pain[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243mICP: Managers drowning in Slack threads     [0m[38;2;78;90;108m└─[0m [38;2;91;141;239msource[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243mCommunity: Engineering Managers Slack Gro…  [0m[38;2;78;90;108m└─[0m [38;2;91;141;239msource[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243mCommunity: Lenny's Newsletter Slack (30k+…  [0m[38;2;78;90;108m└─[0m [38;2;91;141;239msource[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243mCommunity: Hive Index Engineering Managem…  [0m[38;2;78;90;108m└─[0m [38;2;91;141;239msource[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243mTool they pay for: Slack Business+ (now b…  [0m[38;2;78;90;108m└─[0m [38;2;91;141;239msource[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243mTool they pay for: Jira & Confluence        [0m[38;2;78;90;108m└─[0m [38;2;91;141;239msource[0m
+    [1;38;2;245;165;36m·[0m  [38;2;123;138;165m2 claims had no source  [0m[38;2;123;138;165m→ abstained, not asserted[0m
+
+  [1;38;2;32;227;162m▌[0m [1;38;2;32;227;162mARTIFACTS[0m   [38;2;123;138;165mdrafted — nothing sent[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243minterview script  [0m[38;2;91;141;239mout/interview-script.md     [0m[38;2;78;90;108mMom-Test[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243moutreach DMs      [0m[38;2;91;141;239mout/outreach.md             [0m[38;2;78;90;108m12 drafts[0m
+    [1;38;2;32;227;162m✓[0m  [38;2;230;237;243mlanding page      [0m[38;2;91;141;239mout/landing/index.html      [0m[38;2;78;90;108mpublish-gated[0m
+
+  [48;2;245;165;36m[38;2;10;14;20m[1m PAUSE [0m  [1;38;2;245;165;36mYOUR MOVE[0m
+     [38;2;123;138;165mrun the interviews yourself — we never talk to[0m
+     [38;2;123;138;165myour customers for you.  when you are done:[0m
+       [38;2;32;227;162m>[0m [1;38;2;32;227;162mvp synthesize ./interviews/*.md[0m
+
