@@ -102,10 +102,33 @@ def test_validate_writes_three_artifacts_and_abstains(tmp_path):
 
 
 # ---- CLI smoke ------------------------------------------------------------
-def test_default_mode_is_mock_without_key():
-    # no key configured in the test env -> deterministic offline path
-    if not config.has_api_config():
-        assert config.default_mode() == "mock"
+def test_default_mode_precedence(monkeypatch):
+    # api key wins; else a logged-in Claude subscription; else offline mock
+    monkeypatch.setattr(config, "has_api_config", lambda: True)
+    assert config.default_mode() == "api"
+    monkeypatch.setattr(config, "has_api_config", lambda: False)
+    monkeypatch.setattr(config, "sdk_available", lambda: True)
+    assert config.default_mode() == "sdk"
+    monkeypatch.setattr(config, "sdk_available", lambda: False)
+    assert config.default_mode() == "mock"
+
+
+def test_sdk_complete_json_routes_and_accounts(monkeypatch):
+    llm = LLM("sdk", Budget(), Trace(None))
+    monkeypatch.setattr(llm, "_sdk_transport",
+                        lambda system, user, model, tools: ('{"verdict":"CONTINUE","confidence":0.8}', 50, 20, 0.0))
+    out = llm.complete_json("s", "u", mock_result={"unused": True})
+    assert out == {"verdict": "CONTINUE", "confidence": 0.8}
+    assert llm.budget.in_tokens == 50 and llm.budget.out_tokens == 20
+
+
+def test_sdk_research_routes_and_parses(monkeypatch):
+    llm = LLM("sdk", Budget(), Trace(None))
+    reply = ('{"findings":[{"label":"L","claim":"c","source_url":"https://x.com",'
+             '"source_title":"X","supported":true}],"abstained":[]}')
+    monkeypatch.setattr(llm, "_sdk_transport", lambda system, q, model, tools: (reply, 10, 5, None))
+    findings = llm.research("q", system="s")
+    assert findings and findings[0].supported and findings[0].sources[0].url == "https://x.com"
 
 
 def test_cli_synthesize_prints_verdict(tmp_path, capsys):

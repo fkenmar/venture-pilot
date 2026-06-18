@@ -13,12 +13,13 @@ vp synthesize ./interviews/*  # SIGNAL SYNTHESIS → grounded STOP/PIVOT/CONTINU
 
 Two execution paths, one code path around them:
 
-| Mode | Model calls | Everything else (files, grounding, gate, caps, trace) | Use |
+| Mode | Model calls | Everything else (files, grounding, gate, caps, trace) | For |
 |------|-------------|--------------------------------------------------------|-----|
-| **`--api`** (live) | real Anthropic Messages API + server-side `web_search` | real | the functional product (needs `eval/.env`: `VP_MODEL` + `ANTHROPIC_API_KEY`) |
-| **`--mock`** (default w/o key) | canned, deterministic | **real** — real file writes, real citation-grounding over real transcripts, real guardrail caps, real trace | offline demo + the test substrate |
+| **`--api`** | real Anthropic Messages API + server-side `web_search` | real | downloaded users — their own `ANTHROPIC_API_KEY` + `VP_MODEL` |
+| **`--sdk`** | Claude Agent SDK on a logged-in Claude Pro/Max subscription | real | running on a subscription, no API key (our dev path) |
+| **`--mock`** | canned, deterministic | **real** — file writes, citation-grounding, guardrail caps, trace | offline demo + the test substrate |
 
-Mock is **not** a fake: only the model's *generative* text is stubbed. The orchestration, I/O, grounding math, guardrails, and tracing are the same code in both modes. That is what makes "exactly like the demo" verifiable without a key, and what the tests run against.
+`vp` auto-selects the most capable configured backend: api key → `--api`, else a logged-in subscription → `--sdk`, else `--mock`. Mock is **not** a fake: only the model's *generative* text is stubbed — the orchestration, I/O, grounding math, guardrails, and tracing are the same code in every mode. That's what makes the flow verifiable without a key, and what the tests run against.
 
 ## 1. Agentic structure (single-writer orchestrator + read-only subagents)
 

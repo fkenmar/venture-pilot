@@ -139,8 +139,11 @@ def draft(llm, idea: str, findings) -> list[Artifact]:
     """Return draft Artifacts. The orchestrator writes them; this never touches disk."""
     research_summary = "\n".join(f"- {f.label}" for f in findings if f.supported)
     user = f"Idea: {idea}\n\nCited research:\n{research_summary}\n\nDraft the three artifacts."
-    data = llm.complete_json(SYSTEM_PROMPT, user, max_tokens=4000,
-                             mock_result={}, label="draft-artifacts")
+    try:
+        data = llm.complete_json(SYSTEM_PROMPT, user, max_tokens=4000,
+                                 mock_result={}, label="draft-artifacts")
+    except Exception:  # malformed model output -> never crash, fall back to templates
+        data = {}
     if not data:  # mock mode returns {} -> use deterministic templates
         return mock_artifacts(idea)
     return [

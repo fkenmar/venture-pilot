@@ -35,6 +35,10 @@ FAST_MODEL = os.environ.get("VP_FAST_MODEL", "") or MODEL
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 MAX_TOKENS = int(os.environ.get("VP_MAX_TOKENS", "1500"))
 
+# Model alias for the Claude Agent SDK backend (--sdk), which runs on the
+# logged-in Claude subscription instead of a metered API key.
+SDK_MODEL = os.environ.get("VP_SDK_MODEL", "sonnet")
+
 # Hard per-run caps (ARCHITECTURE §5) — enforced as a kill-switch in guardrails.py.
 MAX_STEPS = int(os.environ.get("VP_MAX_STEPS", "12"))
 MAX_RUN_TOKENS = int(os.environ.get("VP_MAX_RUN_TOKENS", "500000"))
@@ -50,9 +54,21 @@ def has_api_config() -> bool:
     return bool(API_KEY and MODEL)
 
 
+def sdk_available() -> bool:
+    """True when the Claude Agent SDK + a `claude` CLI are present (subscription path)."""
+    import importlib.util
+    import shutil
+    return shutil.which("claude") is not None and importlib.util.find_spec("claude_agent_sdk") is not None
+
+
 def default_mode() -> str:
-    """Live when a key+model are configured, else the deterministic mock path."""
-    return "api" if has_api_config() else "mock"
+    """Pick the most capable backend that's actually configured, in order:
+    your API key (api) -> a logged-in Claude subscription (sdk) -> offline (mock)."""
+    if has_api_config():
+        return "api"
+    if sdk_available():
+        return "sdk"
+    return "mock"
 
 
 def require_api_config() -> None:

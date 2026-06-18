@@ -17,7 +17,7 @@ and tells you the truth about what it finds, <strong>including when the truth is
 <img alt="status" src="https://img.shields.io/badge/vp-runs%20offline-20E3A2?style=flat-square&labelColor=0A0E14">
 <img alt="honesty" src="https://img.shields.io/badge/design-honest%20by%20default-5B8DEF?style=flat-square&labelColor=0A0E14">
 <img alt="python" src="https://img.shields.io/badge/python-3.10+-E6EDF3?style=flat-square&labelColor=0A0E14">
-<img alt="tests" src="https://img.shields.io/badge/tests-34%20passing-20E3A2?style=flat-square&labelColor=0A0E14">
+<img alt="tests" src="https://img.shields.io/badge/tests-36%20passing-20E3A2?style=flat-square&labelColor=0A0E14">
 <img alt="prs" src="https://img.shields.io/badge/PRs-welcome-5B8DEF?style=flat-square&labelColor=0A0E14">
 </p>
 
@@ -95,11 +95,11 @@ It weighs **substance over tone** — money already spent on a workaround, speci
 
 ## 🚀 Try it in 60 seconds
 
-The entire flow in the GIF runs **offline, no API key** — mock mode is deterministic:
-
 ```bash
 git clone <this-repo> && cd venture-pilot
 pip install -e .
+
+vp doctor                            # see what's set up + which backend you'll use
 
 # 1) prep cited research + draft artifacts for an idea (you approve the plan)
 vp validate "Slack bot that summarizes long threads for managers"
@@ -108,9 +108,17 @@ vp validate "Slack bot that summarizes long threads for managers"
 vp synthesize ./interviews/*.md
 ```
 
-- `vp validate` writes real **draft** artifacts to `out/` — interview script, outreach DMs, a landing page — and **abstains** on any research claim it can't source.
-- `vp synthesize` reads the sample transcripts in [`interviews/`](interviews/) and returns a **PIVOT** verdict in which **every cited quote is verified verbatim** against the transcripts (`8/8 grounded`). Fabricated quotes are flagged, never shown as fact.
-- **Live mode** — real web-search-backed research + a real model verdict — turns on automatically once `VP_MODEL` + `ANTHROPIC_API_KEY` are in `eval/.env`, or with `--api`. Hard caps on steps/tokens/cost with a kill-switch apply either way.
+`vp` **auto-picks the most capable backend you have** (run `vp doctor` to see it) — or force one with `--api` / `--sdk` / `--mock`:
+
+| Backend | Enable it | For |
+|---|---|---|
+| 🔑 **`--api`** | `cp .env.example .env` → add your `ANTHROPIC_API_KEY` (+ `VP_MODEL`) | **downloaded users — bring your own key.** Pay-per-token; ~pennies/run. |
+| ⚡ **`--sdk`** | `pip install -e ".[sdk]"` → log in once with `claude` | run on a **Claude Pro/Max subscription** — no API key |
+| 🧪 **`--mock`** | nothing | **offline & deterministic** — try the whole flow with zero setup, zero AI calls |
+
+- `vp validate` writes real **draft** artifacts to `out/` (interview script, outreach DMs, a landing page) and **abstains** on any research claim it can't source.
+- `vp synthesize` reads the sample transcripts in [`interviews/`](interviews/) and returns an honest verdict where **every cited quote is verified verbatim** against the transcripts. Fabricated quotes are flagged, never shown as fact.
+- Hard caps on steps / tokens / cost with a kill-switch apply to every live run; a full JSON trace lands in `out/trace.jsonl`.
 
 <details>
 <summary><strong>Under the hood — the Phase 0.1 honesty eval + the tests</strong></summary>
@@ -121,7 +129,7 @@ The verdict is only trusted because a separate eval proves a model beats a naive
 # the honesty gate — the naive baseline FAILS on purpose (~11%), which proves the eval discriminates
 cd eval && python run_eval.py --mode mock
 
-# deterministic tests, no API: 15 app (incl. the live path, stubbed) + 19 eval = 34
+# deterministic tests, no API key: 17 app + 19 eval = 36
 python -m pytest vp/tests -q          # from the repo root
 cd eval && python -m pytest -q
 ```

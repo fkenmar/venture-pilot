@@ -33,6 +33,18 @@ def _approve(auto_yes: bool) -> bool:
     return not (ans or "y").strip().lower().startswith("n")
 
 
+def _deblockquote(text):
+    """Strip markdown blockquote markers so cited quotes match across line wraps
+    (the model quotes clean prose, not `> ` markdown)."""
+    cleaned = []
+    for ln in text.splitlines():
+        s = ln.lstrip()
+        while s[:1] == ">":
+            s = s[1:].lstrip()
+        cleaned.append(s)
+    return "\n".join(cleaned)
+
+
 def _read_transcripts(paths):
     """paths may include unexpanded globs. Returns [(id, text), ...] sorted."""
     files = []
@@ -42,7 +54,7 @@ def _read_transcripts(paths):
     for fp in sorted(files):
         if os.path.isfile(fp):
             with open(fp) as f:
-                out.append((os.path.splitext(os.path.basename(fp))[0], f.read()))
+                out.append((os.path.splitext(os.path.basename(fp))[0], _deblockquote(f.read())))
     return out
 
 

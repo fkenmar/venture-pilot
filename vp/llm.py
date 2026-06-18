@@ -48,6 +48,42 @@ class LLM:
         self.budget.add_usage(est_in, est_out)
         self.trace.usage("mock", est_in, est_out)
 
+    def _sdk_transport(self, system: str, user: str, model: str, tools):
+        """One-shot Claude Agent SDK query — runs on the logged-in Claude
+        subscription (no API key). Returns (text, in_tokens, out_tokens, cost)."""
+        import asyncio
+        try:
+            from claude_agent_sdk import (query, ClaudeAgentOptions,
+                                          AssistantMessage, TextBlock, ResultMessage)
+        except ImportError as e:
+            raise SystemExit("--sdk needs the Claude Agent SDK: `pip install claude-agent-sdk` "
+                             "plus a logged-in `claude` CLI (Claude Pro/Max).") from e
+
+        async def go():
+            opts = ClaudeAgentOptions(system_prompt=system, model=model,
+                                      allowed_tools=list(tools or []))
+            parts, result_text, usage, cost = [], None, None, None
+            async for msg in query(prompt=user, options=opts):
+                if isinstance(msg, AssistantMessage):
+                    for b in msg.content:
+                        if isinstance(b, TextBlock):
+                            parts.append(b.text)
+                elif isinstance(msg, ResultMessage):
+                    usage = msg.usage or {}
+                    cost = msg.total_cost_usd
+                    if msg.result:
+                        result_text = msg.result
+            return (result_text or "".join(parts)), (usage or {}), cost
+
+        text, usage, cost = asyncio.run(go())
+        return text, int(usage.get("input_tokens", 0)), int(usage.get("output_tokens", 0)), cost
+
+    def _sdk_account(self, in_tok: int, out_tok: int, cost) -> None:
+        self.budget.add_usage(in_tok, out_tok)
+        self.trace.usage(config.SDK_MODEL, in_tok, out_tok)
+        if cost is not None:
+            self.trace.event("cost", usd=cost)
+
     # -- structured completion -------------------------------------------
     def complete_json(self, system: str, user: str, *, model: str | None = None,
                       max_tokens: int | None = None, mock_result=None, label: str = "complete") -> dict:
@@ -56,6 +92,10 @@ class LLM:
         if self.mode == "mock":
             self._mock_usage(system, user, label)
             return dict(mock_result or {})
+        if self.mode == "sdk":
+            text, in_tok, out_tok, cost = self._sdk_transport(system, user, config.SDK_MODEL, None)
+            self._sdk_account(in_tok, out_tok, cost)
+            return parse_json(text)
         msg = self._anthropic().messages.create(
             model=model or config.MODEL,
             max_tokens=max_tokens or config.MAX_TOKENS,
@@ -76,6 +116,14 @@ class LLM:
         if self.mode == "mock":
             self._mock_usage(system, query, label)
             findings = mock_findings or []
+            for f in findings:
+                for s in f.sources:
+                    self.trace.source(s.url, s.title)
+            return findings
+        if self.mode == "sdk":
+            text, in_tok, out_tok, cost = self._sdk_transport(system, query, config.SDK_MODEL, ["WebSearch"])
+            self._sdk_account(in_tok, out_tok, cost)
+            findings = self._parse_findings(text)
             for f in findings:
                 for s in f.sources:
                     self.trace.source(s.url, s.title)

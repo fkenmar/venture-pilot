@@ -13,6 +13,8 @@ dependencies = ["anthropic>=0.40"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+# Use a Claude Pro/Max subscription instead of an API key (the `--sdk` backend).
+sdk = ["claude-agent-sdk>=0.2"]
 
 [project.scripts]
 vp = "vp.cli:main"

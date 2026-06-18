@@ -41,8 +41,13 @@ Return STRICT JSON, nothing else:
  "cited_quotes": ["<verbatim substrings copied EXACTLY from the transcripts>"],
  "demand": "<where real demand points if PIVOT, else empty>",
  "recommendation": "<the honest next step>"}
-summary: at most 2 lines, each <= 54 characters.
-Every quote MUST be copied character-for-character from a transcript. Never invent a quote."""
+
+Hard limits (keep the readout clean and groundable):
+- summary: at most 2 lines, each <= 54 characters.
+- quotes (cited_quotes AND every evidence quote): SHORT verbatim snippets — a few words, \
+< 55 characters — copied character-for-character from a transcript. Never invent or paraphrase a quote.
+- evidence: at most 5 items; note: <= 6 words (e.g. "money already spent · t1").
+- demand: <= 60 characters. recommendation: one sentence."""
 
 USER_TEMPLATE = """Idea pitched: {idea}
 Interviews ({n}):
