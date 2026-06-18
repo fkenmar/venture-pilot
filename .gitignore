@@ -10,8 +10,14 @@ __pycache__/
 venv/
 .pytest_cache/
 
-# eval outputs
+# run outputs (vp writes artifacts + trace here)
 eval/out/
+/out/
+
+# packaging
+*.egg-info/
+build/
+dist/
 
 # os
 .DS_Store

@@ -14,10 +14,10 @@ and tells you the truth about what it finds, <strong>including when the truth is
 </p>
 
 <p>
-<img alt="status" src="https://img.shields.io/badge/status-Phase%200%20·%20validation-20E3A2?style=flat-square&labelColor=0A0E14">
+<img alt="status" src="https://img.shields.io/badge/vp-runs%20offline-20E3A2?style=flat-square&labelColor=0A0E14">
 <img alt="honesty" src="https://img.shields.io/badge/design-honest%20by%20default-5B8DEF?style=flat-square&labelColor=0A0E14">
-<img alt="python" src="https://img.shields.io/badge/python-3.13-E6EDF3?style=flat-square&labelColor=0A0E14">
-<img alt="tests" src="https://img.shields.io/badge/eval%20tests-19%20passing-20E3A2?style=flat-square&labelColor=0A0E14">
+<img alt="python" src="https://img.shields.io/badge/python-3.10+-E6EDF3?style=flat-square&labelColor=0A0E14">
+<img alt="tests" src="https://img.shields.io/badge/tests-34%20passing-20E3A2?style=flat-square&labelColor=0A0E14">
 <img alt="prs" src="https://img.shields.io/badge/PRs-welcome-5B8DEF?style=flat-square&labelColor=0A0E14">
 </p>
 
@@ -36,11 +36,11 @@ and tells you the truth about what it finds, <strong>including when the truth is
 
 <div align="center">
 
-<img src="docs/assets/demo.gif" alt="venture-pilot concept demo — the envisioned end-to-end customer-discovery flow ending in an honest, quote-grounded verdict" width="840">
+<img src="docs/assets/demo.gif" alt="the vp CLI running: plan, approve, cited research, drafted artifacts, and an honest quote-grounded PIVOT verdict" width="840">
 
-<sub><strong>Concept demo — the envisioned flow.</strong> <em>Cited research → drafted artifacts (nothing sent) → <strong>you</strong> run the interviews → an honest, quote-grounded <strong>PIVOT</strong> verdict with calibrated confidence.</em></sub>
+<sub><strong>This is <code>vp</code> actually running</strong> — recorded straight from the CLI, fully offline. <em>Plan → <strong>you</strong> approve → cited research (it abstains when there's no source) → drafted artifacts (nothing sent) → <strong>you</strong> run the interviews → an honest <strong>PIVOT</strong> verdict where every cited quote is checked verbatim against the transcripts (<code>8/8 grounded</code>).</em></sub>
 
-<sub>👉 This is the product we're building toward — <strong>it isn't built yet.</strong> What actually runs <strong>today</strong> is the Phase&nbsp;0.1 honesty eval: <a href="#-try-it-in-60-seconds">try it in 60 seconds ↓</a></sub>
+<sub>👉 Runs with <strong>zero setup, no API key.</strong> Live mode (real web-search research + a real model verdict) turns on when you add your key. <a href="#-try-it-in-60-seconds">Run it ↓</a></sub>
 
 </div>
 
@@ -95,27 +95,39 @@ It weighs **substance over tone** — money already spent on a workaround, speci
 
 ## 🚀 Try it in 60 seconds
 
-You can run the project's first real artifact — the **Phase 0.1 verdict eval** — right now, offline, no API key. It's the test that validates (or kills) the entire honesty thesis *before* any product is built.
+The entire flow in the GIF runs **offline, no API key** — mock mode is deterministic:
 
 ```bash
-git clone <this-repo> && cd venture-pilot/eval
+git clone <this-repo> && cd venture-pilot
+pip install -e .
 
-# Offline sanity check — no API key. Runs a naive keyword sentiment-follower
-# as the judge. It SHOULD score badly: that proves the dataset has teeth and
-# the gate correctly fails a tone-follower.
-python run_eval.py --mode mock
+# 1) prep cited research + draft artifacts for an idea (you approve the plan)
+vp validate "Slack bot that summarizes long threads for managers"
 
-# The real test (needs eval/.env: VP_MODEL + ANTHROPIC_API_KEY)
-pip install -r requirements.txt
-python run_eval.py --mode api
-
-# Deterministic test suite (19 tests, no API)
-python -m pytest tests/ -q
+# 2) you run the interviews yourself, then synthesize them into one honest verdict
+vp synthesize ./interviews/*.md
 ```
 
-**What you'll see:** each of 18 labeled transcripts judged, accuracy vs. three baselines, the **"money metric"** (accuracy on the records a tone-follower gets wrong), a confusion matrix, calibration, citation-grounding, and a single **PASS / WEAK / FAIL** gate decision.
+- `vp validate` writes real **draft** artifacts to `out/` — interview script, outreach DMs, a landing page — and **abstains** on any research claim it can't source.
+- `vp synthesize` reads the sample transcripts in [`interviews/`](interviews/) and returns a **PIVOT** verdict in which **every cited quote is verified verbatim** against the transcripts (`8/8 grounded`). Fabricated quotes are flagged, never shown as fact.
+- **Live mode** — real web-search-backed research + a real model verdict — turns on automatically once `VP_MODEL` + `ANTHROPIC_API_KEY` are in `eval/.env`, or with `--api`. Hard caps on steps/tokens/cost with a kill-switch apply either way.
 
-> In `--mode mock` the naive tone-follower scores **~11% and fails the gate on purpose** — it's the dumb baseline the real model has to beat by ≥20 points. That failure is the proof the eval actually discriminates.
+<details>
+<summary><strong>Under the hood — the Phase 0.1 honesty eval + the tests</strong></summary>
+
+The verdict is only trusted because a separate eval proves a model beats a naive tone-follower *first*:
+
+```bash
+# the honesty gate — the naive baseline FAILS on purpose (~11%), which proves the eval discriminates
+cd eval && python run_eval.py --mode mock
+
+# deterministic tests, no API: 15 app (incl. the live path, stubbed) + 19 eval = 34
+python -m pytest vp/tests -q          # from the repo root
+cd eval && python -m pytest -q
+```
+
+The real model has to beat that naive tone-follower by ≥20 points before the verdict ships ([`eval/`](eval/)).
+</details>
 
 ---
 
@@ -166,26 +178,27 @@ Hard caps on steps / tokens / cost with a kill-switch, and full traces of every 
 
 ## 📦 What's in this repo
 
-This is a **greenfield** project being de-risked in public. Code lands only after the Phase 0 validation gates pass. What's public today:
+Built in the open. The wedge is implemented as an early **`vp`** MVP you can run offline today; the verdict stays gated by the Phase 0.1 eval. What's public:
 
 | Path | What it is |
 |------|-----------|
-| [**`eval/`**](eval/) | The **Phase 0.1 verdict eval** — a real, runnable harness testing whether a model can separate genuine signal from politeness. 18 labeled transcripts (with deliberate *politeness traps*), scoring, a pass/fail gate, and 19 deterministic tests. |
-| [`eval/data/`](eval/data/) | The labeled transcript set + the [`RUBRIC.md`](eval/data/RUBRIC.md) labeling standard for adding real interviews. |
-| [`docs/assets/`](docs/assets/) | Brand assets, plus the concept-demo storyboard (`concept_demo.py` + `demo.tape`) that generates the GIF above. |
+| [**`vp/`**](vp/) | The **app** — a single-writer orchestrator + read-only cited research, draft-only artifacts, and the verdict synthesizer, with enforced caps + full tracing. `vp validate` / `vp synthesize`. Design in [`vp/IMPLEMENTATION.md`](vp/IMPLEMENTATION.md). |
+| [`interviews/`](interviews/) | Eight sample interview transcripts so `vp synthesize` runs end-to-end out of the box. |
+| [**`eval/`**](eval/) | The **Phase 0.1 verdict eval** — proves a model separates genuine signal from politeness before the verdict is trusted. 18 labeled transcripts (with *politeness traps*), scoring, a pass/fail gate, 19 tests. |
+| [`docs/assets/`](docs/assets/) | Brand assets + the VHS `demo.tape` that records the demo GIF straight from the real CLI. |
 
-> The full **strategy, architecture, roadmap, GTM, and business-model** docs are kept **private while the idea is validated.** The [`eval/`](eval/) harness is public on purpose — it's the part that proves or kills the thesis.
+> The full **strategy, architecture, roadmap, GTM, and business-model** docs are kept **private while the idea is validated.** The code and the eval are public on purpose — they're the part that proves or kills the thesis.
 
 ---
 
 ## 🗺 Status and roadmap
 
-**Greenfield — Phase 0 (validation before code).** The honesty thesis is being proven on a labeled eval set before any product is built. The wedge ships *verifiable artifacts first* (cited research + landing page), and the headline verdict feature ships **only if the Phase 0.1 eval clears its gate.**
+**Phase 0 — validation, with an early MVP in hand.** The honesty thesis is being proven on a labeled eval set, and the wedge now exists as a runnable `vp` MVP (offline mock today; live mode behind your API key). It leads with *verifiable artifacts* (cited research + landing page); the headline verdict is trusted **only while the Phase 0.1 eval clears its gate.**
 
 ```
-Phase 0  ░ De-risk before code      → kill/redesign gates  ·  ← we are here
-Phase 1  ░ Verifiable-artifact MVP  → cited research + landing page
-Phase 2  ░ The honest verdict       → STOP/PIVOT/CONTINUE + first paying users
+Phase 0  ░ De-risk before code      → kill/redesign gates                  ← validating now
+Phase 1  ░ Verifiable-artifact MVP  → cited research + landing page        ← vp MVP runs offline
+Phase 2  ░ The honest verdict       → STOP/PIVOT/CONTINUE                   ← vp MVP runs offline
 Phase 3  ░ Escape one-shot churn    → recurring weekly signal digest
 Phase 4  ░ Expand toward the vision → only after a retention floor
 ```
@@ -199,7 +212,7 @@ Each phase is a **kill/redesign gate** — validation before code. The detailed 
 There are no fake users here and there won't be — but if the honesty wedge resonates, you can help prove it out:
 
 - ⭐ **Star / watch** the repo to follow the validation in public.
-- 🧪 **Run the eval** (`python run_eval.py --mode mock`) and open an issue with what you find.
+- 🧪 **Run it** — `pip install -e . && vp validate "<your idea>"` — and open an issue with what you find.
 - 🗣️ **Bring real transcripts.** The eval gets sharper with real, redacted interview data — see [`eval/data/RUBRIC.md`](eval/data/RUBRIC.md) for the labeling standard.
 - 💡 **Disagree well.** The fastest way to improve an honesty tool is an adversarial counter-example. PRs and issues welcome.
 
